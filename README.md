@@ -68,3 +68,53 @@ The feature must be covered by automated tests, and all tests must pass when you
 
 Do not commit and do not push anything; leave all changes uncommitted in the working copy. When you are done, report what you built, which files you added or changed, how you verified it, and anything you are unsure about.
 ```
+
+## Under the guided regime
+
+The branch `v1-guided` is `main` with luminor-meridian's quality and correctness gates: PHP CS Fixer, PHPStan at
+level 10 with the ergebnis rules and the project's own rules, and architecture tests. Put on top of `v1-guided`, this
+implementation fails all three gates, while its behaviour tests pass: 1 failed architecture test (4 offending files),
+19 PHPStan errors, 8 files that violate the code style, and 95 of 96 tests passing.
+
+The only conflict in code was in `TodoListDomainService`: `v1-guided`'s way of marking an item done, plus this
+branch's one added line that stops the timer. All gates ran in check-only mode, so that nothing was fixed away.
+
+### 1. Architecture test: time tracking uses the todo list's internals
+
+`TimeTracking must not use Todo internals` fails: *Expecting 'App\TimeTracking' not to use 'App\Todo\Domain'*. Pest
+reports the first offence; these are all of them:
+
+| File | Uses the todo list's internal |
+|---|---|
+| `src/TimeTracking/Domain/Service/TimeTrackingDomainService.php` | `Todo\Domain\Service\TodoListDomainService`, `Todo\Domain\Model\TodoItem` |
+| `src/TimeTracking/Domain/Model/TrackedItem.php` | `Todo\Domain\Model\TodoItem` |
+| `src/TimeTracking/Infrastructure/Adapter/StopsTimersOfTodoItems.php` | implements `Todo\Domain\Service\ItemTimersInterface` |
+| `tests/Unit/TimeTracking/TimeTrackingTestCase.php` | `Todo\Domain\Service\TodoListDomainService` |
+
+The guided rules allow a vertical to reach another only through that vertical's facade, and the todo list has none.
+
+### 2. PHPStan: 19 errors
+
+- **The time periods' JSON store, 6 errors** (`JsonFileTimePeriodStore`, lines 33–39): it trusts what it decodes. The
+  fields are `mixed` where strings are expected, and the result is no `list`.
+- **Named arguments, 10 errors** (`TimeTrackingScreen`, lines 58–68): `new Style(padding: …, gap: …, bold: …,
+  color: …, hidden: …, border: …)`. The ergebnis rules forbid named arguments in calls.
+- **The tests' base class, 3 errors** (`TimeTrackingTestCase`): `setUp()`, `spent()` and `isRunning()` are not
+  `final`, though their class is abstract.
+
+### 3. Code style: 8 files
+
+All of it is layout that `composer quality` fixes by itself: arguments of a call with four or more one below the
+other, aligned constructor parameters and constants, and a class name imported instead of written fully qualified in a
+PHPDoc. The files: `JsonFileTimePeriodStore`, `TimeTrackingDomainService`, `TimeTrackingScreen`,
+`TodoListDomainService`, and four test files.
+
+### What the gates did not catch
+
+None of the project's own PHPStan rules reported anything. These choices pass every gate:
+
+- **The direction of dependencies:** `TimeTracking` is not listed in the configuration of the rule for the direction
+  between verticals, so it may depend on any vertical. Only the architecture test sees the breach.
+- **The todo list knows timers:** its domain service calls `ItemTimersInterface`, a port of its own that time tracking
+  implements. No rule forbids a vertical to declare such a port.
+- **Stopping a timer is decided twice:** in `StopsTimer` and in `TimeTrackingDomainService`. No gate looks for that.
