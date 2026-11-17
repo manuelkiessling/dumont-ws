@@ -52,5 +52,6 @@ services:
             # listed here may depend on any vertical.
             allowedDependencies:
                 - 'Todo ->'
+                - 'TimeTracking -> Todo'
         tags:
             - phpstan.rules.rule

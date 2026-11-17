@@ -10,6 +10,7 @@ use App\Todo\Domain\Exception\ItemNotOnTheListException;
 use App\Todo\Domain\Model\TodoItem;
 use App\Todo\Domain\Service\TodoListDomainService;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 final class TodoListDomainServiceTest extends TestCase
 {
@@ -17,7 +18,7 @@ final class TodoListDomainServiceTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->todoList = new TodoListDomainService(new InMemoryTodoItemStore());
+        $this->todoList = new TodoListDomainService(new InMemoryTodoItemStore(), new EventDispatcher());
     }
 
     public function testAnAddedItemIsOpenAndTrimmed(): void
