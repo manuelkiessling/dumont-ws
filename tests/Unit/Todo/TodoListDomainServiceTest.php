@@ -7,6 +7,7 @@ namespace App\Tests\Unit\Todo;
 use App\Common\Domain\Service\DateAndTimeService;
 use App\Todo\Domain\Exception\InvalidItemTextException;
 use App\Todo\Domain\Exception\ItemNotOnTheListException;
+use App\Todo\Domain\Model\TodoItem;
 use App\Todo\Domain\Service\TodoListDomainService;
 use PHPUnit\Framework\TestCase;
 
@@ -37,7 +38,10 @@ final class TodoListDomainServiceTest extends TestCase
         $this->todoList->addItem('First');
         $this->todoList->addItem('Second');
 
-        self::assertSame(['First', 'Second'], array_map(static fn ($item) => $item->text, $this->todoList->items()));
+        self::assertSame(
+            ['First', 'Second'],
+            array_map(static fn (TodoItem $item): string => $item->text, $this->todoList->items())
+        );
     }
 
     public function testAnEmptyTextIsRefused(): void

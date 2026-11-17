@@ -7,9 +7,13 @@ A todo list in the terminal.
 You need Docker.
 
 ```bash
-docker compose run --rm app                        # opens the todo list
-docker compose run --rm app vendor/bin/phpunit     # runs the tests
+docker compose run --rm app                          # opens the todo list
+docker compose run --rm app composer test            # runs all tests: architecture, unit and integration
+docker compose run --rm app composer quality         # fixes the code style, then checks it and runs PHPStan
+docker compose run --rm app composer quality:check   # checks the code style without fixing it, and runs PHPStan
 ```
+
+A change is done when `composer quality` and `composer test` pass.
 
 ## Using it
 

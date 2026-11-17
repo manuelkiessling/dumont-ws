@@ -77,7 +77,12 @@ final class TodoListScreenTest extends TestCase
 
     public function testTheSelectedItemIsMarkedDoneAndStaysSelected(): void
     {
-        $this->press('Buy milk', self::ENTER, 'Call mum', self::ENTER);
+        $this->press(
+            'Buy milk',
+            self::ENTER,
+            'Call mum',
+            self::ENTER
+        );
 
         $this->press(self::TAB, self::DOWN, self::ENTER);
 
@@ -94,7 +99,12 @@ final class TodoListScreenTest extends TestCase
 
     public function testDeletingTheLastItemLeavesAnEmptyList(): void
     {
-        $this->press('Buy milk', self::ENTER, self::TAB, 'd');
+        $this->press(
+            'Buy milk',
+            self::ENTER,
+            self::TAB,
+            'd'
+        );
 
         self::assertStringContainsString('Nothing to do.', $this->screen());
     }
@@ -108,7 +118,12 @@ final class TodoListScreenTest extends TestCase
 
     public function testCtrlCQuits(): void
     {
-        $this->press('Buy milk', self::ENTER, self::TAB, self::CTRL_C);
+        $this->press(
+            'Buy milk',
+            self::ENTER,
+            self::TAB,
+            self::CTRL_C
+        );
 
         self::assertFalse($this->tui->isRunning());
     }

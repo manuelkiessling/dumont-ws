@@ -32,7 +32,7 @@ use Symfony\Component\Tui\Widget\Util\StringUtils;
 final class TodoListScreen
 {
     /**
-     * On top of each widget's own keys: Enter adds an item or marks the selected one done, Escape quits
+     * On top of each widget's own keys: Enter adds an item or marks the selected one done, Escape quits.
      */
     private const array KEYBINDINGS = [
         'quit'           => ['ctrl+c'],
@@ -64,19 +64,19 @@ final class TodoListScreen
     private static function styleSheet(): StyleSheet
     {
         $border     = Border::all(1, BorderPattern::ROUNDED, 'gray');
-        $focusedBox = new Style(border: Border::all(1, BorderPattern::ROUNDED, 'cyan'));
+        $focusedBox = new Style()->withBorder(Border::all(1, BorderPattern::ROUNDED, 'cyan'));
 
         return new StyleSheet([
-            ':root'                                => new Style(padding: Padding::xy(2, 1), gap: 1),
-            '.title'                               => new Style(bold: true, color: 'cyan'),
-            InputWidget::class                     => new Style(Padding::xy(2), $border),
-            InputWidget::class . ':focus'          => $focusedBox,
-            SelectListWidget::class                => new Style(Padding::xy(2, 1), $border),
-            SelectListWidget::class . ':focus'     => $focusedBox,
-            '.empty-list'                          => new Style(Padding::xy(2, 1), $border, color: 'gray'),
-            '.notice'                              => new Style(bold: true, color: 'yellow'),
-            '.hidden'                              => new Style(hidden: true),
-            '.help'                                => new Style(color: 'gray'),
+            ':root'                            => new Style()->withPadding(Padding::xy(2, 1))->withGap(1),
+            '.title'                           => new Style()->withBold()->withColor('cyan'),
+            InputWidget::class                 => new Style(Padding::xy(2), $border),
+            InputWidget::class . ':focus'      => $focusedBox,
+            SelectListWidget::class            => new Style(Padding::xy(2, 1), $border),
+            SelectListWidget::class . ':focus' => $focusedBox,
+            '.empty-list'                      => new Style(Padding::xy(2, 1), $border)->withColor('gray'),
+            '.notice'                          => new Style()->withBold()->withColor('yellow'),
+            '.hidden'                          => new Style()->withHidden(),
+            '.help'                            => new Style()->withColor('gray'),
         ]);
     }
 
@@ -86,7 +86,7 @@ final class TodoListScreen
 
         $this->notice = new TextWidget('');
         $this->notice->setStyleClasses(['notice', 'hidden']);
-        $this->input  = new InputWidget();
+        $this->input = new InputWidget();
         $this->input->setPrompt('New item: ');
         $this->input->onSubmit($this->addItem(...));
         $this->input->onCancel(fn () => $this->tui->stop());

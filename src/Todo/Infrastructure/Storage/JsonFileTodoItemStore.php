@@ -27,17 +27,18 @@ final readonly class JsonFileTodoItemStore implements TodoItemStoreInterface
             return [];
         }
 
-        $rows = json_decode((string) file_get_contents($this->todoItemsFile), true, 512, JSON_THROW_ON_ERROR);
-
-        return array_map(
-            fn (array $row): TodoItem => new TodoItem(
-                $row['id'],
-                $row['text'],
-                $this->date($row['addedAt']),
-                $row['doneAt'] === null ? null : $this->date($row['doneAt'])
-            ),
-            $rows
+        $rows = json_decode(
+            (string) file_get_contents($this->todoItemsFile),
+            true,
+            512,
+            JSON_THROW_ON_ERROR
         );
+
+        if (!is_array($rows) || !array_is_list($rows)) {
+            throw new RuntimeException("The file {$this->todoItemsFile} holds no list of todo items.");
+        }
+
+        return array_map($this->item(...), $rows);
     }
 
     public function store(array $items): void
@@ -59,6 +60,25 @@ final readonly class JsonFileTodoItemStore implements TodoItemStoreInterface
 
         $json = json_encode($rows, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
         file_put_contents($this->todoItemsFile, $json . "\n", LOCK_EX);
+    }
+
+    private function item(mixed $row): TodoItem
+    {
+        $id      = is_array($row) ? $row['id']      ?? null : null;
+        $text    = is_array($row) ? $row['text']    ?? null : null;
+        $addedAt = is_array($row) ? $row['addedAt'] ?? null : null;
+        $doneAt  = is_array($row) ? $row['doneAt']  ?? null : null;
+
+        if (!is_string($id) || !is_string($text) || !is_string($addedAt) || !(is_string($doneAt) || $doneAt === null)) {
+            throw new RuntimeException("The file {$this->todoItemsFile} holds an item that is not one of the todo list.");
+        }
+
+        return new TodoItem(
+            $id,
+            $text,
+            $this->date($addedAt),
+            $doneAt === null ? null : $this->date($doneAt)
+        );
     }
 
     private function date(string $value): DateTimeImmutable

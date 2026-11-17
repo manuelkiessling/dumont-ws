@@ -1,0 +1,56 @@
+parameters:
+    level: 10
+    type_coverage:
+        return: 100
+        param: 100
+        property: 100
+        constant: 100
+    ergebnis:
+        final:
+            enabled: false
+        noExtends:
+            enabled: false
+        noNullableReturnTypeDeclaration:
+            enabled: false
+        noConstructorParameterWithDefaultValue:
+            enabled: false
+        noParameterWithNullDefaultValue:
+            enabled: false
+        noParameterWithNullableTypeDeclaration:
+            enabled: false
+    tmpDir: var/cache/phpstan
+    paths:
+        - bin/
+        - config/
+        - src/
+        - tests/
+        - tools/
+    excludePaths:
+        analyse:
+            - tests/Architecture/*
+            - tests/Fixtures/*
+            - config/reference.php
+
+rules:
+    - App\Tools\PhpStan\Rules\NoDirectDateTimeUsageRule
+    - App\Tools\PhpStan\Rules\NoAssociativeArraysAcrossBoundariesRule
+    - App\Tools\PhpStan\Rules\DomainReachesOutThroughInterfacesRule
+    - App\Tools\PhpStan\Rules\FacadesExposeNoInternalsRule
+    - App\Tools\PhpStan\Rules\FacadeClassesHaveWorkOfTheirOwnRule
+    - App\Tools\PhpStan\Rules\NoDtoBesideAFacadeDtoOfTheSameFieldsRule
+    - App\Tools\PhpStan\Rules\PureDomainCodeRule
+    - App\Tools\PhpStan\Rules\SymfonyEventClassNameRule
+    - App\Tools\PhpStan\Rules\DispatchedSymfonyEventNameRule
+    - App\Tools\PhpStan\Rules\ClosedSetsAreEnumsRule
+    - App\Tools\PhpStan\Rules\DomainNamesNoInfrastructureRule
+
+services:
+    -
+        class: App\Tools\PhpStan\Rules\VerticalDependencyDirectionRule
+        arguments:
+            # The dependencies between verticals point one way. Every vertical may depend on Common; a vertical not
+            # listed here may depend on any vertical.
+            allowedDependencies:
+                - 'Todo ->'
+        tags:
+            - phpstan.rules.rule

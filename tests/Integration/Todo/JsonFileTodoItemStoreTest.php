@@ -37,7 +37,11 @@ final class JsonFileTodoItemStoreTest extends KernelTestCase
     public function testStoredItemsAreReadBackAsTheyWere(): void
     {
         $items = [
-            new TodoItem('0195f0a2-5c3b-7d4e-8f00-123456789abc', 'Buy milk', DateAndTimeService::getDateTimeImmutable('2026-11-17 09:00:00.123456')),
+            new TodoItem(
+                '0195f0a2-5c3b-7d4e-8f00-123456789abc',
+                'Buy milk',
+                DateAndTimeService::getDateTimeImmutable('2026-11-17 09:00:00.123456')
+            ),
             new TodoItem(
                 '0195f0a2-5c3b-7d4e-8f00-123456789abd',
                 'Grüße an Oma',

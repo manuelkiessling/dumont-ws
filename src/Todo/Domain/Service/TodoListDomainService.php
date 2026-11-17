@@ -71,8 +71,11 @@ final readonly class TodoListDomainService
             return;
         }
 
-        $items[$index] = $items[$index]->markedDoneAt(DateAndTimeService::getDateTimeImmutable());
-        $this->store->store($items);
+        $doneAt = DateAndTimeService::getDateTimeImmutable();
+        $this->store->store(array_map(
+            static fn (TodoItem $item): TodoItem => $item->id === $itemId ? $item->markedDoneAt($doneAt) : $item,
+            $items
+        ));
     }
 
     /**

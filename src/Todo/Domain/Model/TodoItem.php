@@ -26,6 +26,11 @@ final readonly class TodoItem
 
     public function markedDoneAt(DateTimeImmutable $doneAt): self
     {
-        return new self($this->id, $this->text, $this->addedAt, $doneAt);
+        return new self(
+            $this->id,
+            $this->text,
+            $this->addedAt,
+            $doneAt
+        );
     }
 }

@@ -2,3 +2,4 @@
 /var/
 /.env.local
 /.phpunit.cache/
+/.php-cs-fixer.cache
