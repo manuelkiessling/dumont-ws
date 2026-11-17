@@ -1,7 +1,0 @@
-twig:
-    paths:
-        '%kernel.project_dir%/src/Todo/Presentation/Resources/templates': todo.presentation
-
-when@test:
-    twig:
-        strict_variables: true

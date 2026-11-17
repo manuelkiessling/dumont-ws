@@ -7,3 +7,6 @@ RUN apt-get update \
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
+
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
+CMD ["bin/console", "app:todo"]

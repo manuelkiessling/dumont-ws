@@ -16,13 +16,11 @@ services:
             - '../src/*/Domain/Model/'
             - '../src/*/Domain/Exception/'
 
+    # Logs go to var/log/<environment>.log, not to the terminal
+    logger:
+        class: Symfony\Component\HttpKernel\Log\Logger
+        arguments: ['info', '%kernel.logs_dir%/%kernel.environment%.log']
+
 when@test:
     parameters:
         app.todo_items_file: '%kernel.project_dir%/var/test/todo_items.json'
-
-    services:
-        # Without Monolog, Symfony's logger writes to stderr; the tests log to var/log/test.log instead, so that an
-        # error a test provokes on purpose (a 404, say) does not show up in PHPUnit's output
-        logger:
-            class: Symfony\Component\HttpKernel\Log\Logger
-            arguments: ['info', '%kernel.logs_dir%/test.log']

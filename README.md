@@ -1,17 +1,26 @@
 # dumont-ws
 
-A sample Todo application.
+A todo list in the terminal.
 
 ## Running it
 
-Everything runs in Docker; nothing but Docker is needed on the host.
+You need Docker.
 
 ```bash
-docker compose run --rm app composer install       # installs dependencies
-docker compose up                                  # serves http://localhost:8000
+docker compose run --rm app                        # opens the todo list
 docker compose run --rm app vendor/bin/phpunit     # runs the tests
-docker compose run --rm app bin/console debug:router
 ```
 
-The list is kept in `var/data/todo_items.json` (the tests use `var/test/todo_items.json`). Delete the file to start
-over.
+## Using it
+
+Type an item and press Enter to add it. Press Tab to move to the list.
+
+| Key | What it does |
+|---|---|
+| Enter | adds the typed item, or marks the selected item done |
+| ↑ ↓ | select an item |
+| d or Delete | deletes the selected item |
+| Tab, Shift+Tab | move between the input line and the list |
+| Esc, Ctrl+C | quit |
+
+The list is kept in `var/data/todo_items.json`. Delete the file to start over.

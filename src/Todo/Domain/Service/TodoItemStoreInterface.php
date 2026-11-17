@@ -7,8 +7,7 @@ namespace App\Todo\Domain\Service;
 use App\Todo\Domain\Model\TodoItem;
 
 /**
- * The port through which the domain keeps its items. Where and how they are kept is the infrastructure's business;
- * the domain only knows this interface.
+ * Keeps the todo list's items.
  */
 interface TodoItemStoreInterface
 {
