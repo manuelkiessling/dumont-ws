@@ -75,3 +75,75 @@ The feature must be covered by automated tests, and all tests must pass when you
 
 Do not commit and do not push anything; leave all changes uncommitted in the working copy. When you are done, report what you built, which files you added or changed, how you verified it, and anything you are unsure about.
 ```
+
+## Under the guided regime
+
+The branch `v1-guided` is `main` (with its annotations and comments) plus luminor-meridian's quality and correctness
+gates: PHP CS Fixer, PHPStan at level 10 with the ergebnis rules and the project's own rules, and architecture tests.
+Put on top of `v1-guided`, this implementation fails all three gates, while its behaviour tests pass: 1 failed
+architecture test, 50 PHPStan errors, 7 files that violate the code style, and 90 of 91 tests passing.
+
+Three files had conflicts: `TodoListDomainService` and its test kept `v1-guided`'s code plus this branch's additions
+(the call that stops the timer, the import of `TimerStopperInterface`); the README took this branch's version. All
+gates ran in check-only mode, so that nothing was fixed away.
+
+### 1. Architecture test: time tracking uses the todo list's internals
+
+`TimeTracking must not use Todo internals` fails: *Expecting 'App\TimeTracking' not to use 'App\Todo\Domain'*. The
+offending class is `src/TimeTracking/Domain/Service/TimeTrackingDomainService.php`, which names three of the todo
+list's internals:
+
+- `Todo\Domain\Service\TodoItemStoreInterface`: it reads the todo list's items from the todo list's store itself,
+  past the todo list's domain service.
+- `Todo\Domain\Service\TimerStopperInterface`: it implements a port that the todo list's domain declares, so that the
+  todo list can stop a timer.
+- `Todo\Domain\Model\TodoItem`.
+
+Two tests do the same, `tests/Unit/TimeTracking/TimeTrackingDomainServiceTest.php` and `TimeTrackingScreenTest.php`,
+which build the todo list's `TodoListDomainService`; the architecture test looks at the application's code only, so
+it does not report them. The guided rules allow a vertical to reach another only through that vertical's facade, and
+the todo list has none.
+
+### 2. PHPStan: 50 errors
+
+| Errors | Identifier | What |
+|---|---|---|
+| 1 | `noAssociativeArraysAcrossBoundaries.return` | the project's rule: `TimeTrackingDomainService::trackedItems()` returns an array that is no `list` |
+| 4 | `missingType.iterableValue` | arrays without the type of their values: `trackedItems()`, `withTimersStopped()`, `TimeTrackingScreen::listItem()`, the in-memory test store's property |
+| 14 | `argument.type` | mostly the consequence of the above; also the time entries' JSON store, and lists that are lost as lists |
+| 13 | `property.nonObject`, `method.nonObject`, `encapsedStringPart.nonString` | the consequence of the above: the screen and the tests use a tracked item that PHPStan only knows as `mixed` |
+| 3 | `return.type` | the JSON store and the in-memory store return no `list`, a test helper returns `mixed` |
+| 12 | `ergebnis.noNamedArgument` | `new Style(padding: …, gap: …, bold: …, color: …, hidden: …, border: …)` in `TimeTrackingScreen` |
+| 3 | `ergebnis.noIsset` | `isset()` in `TimeTrackingDomainService` (twice) and in `TimeTrackingScreenTest` |
+
+Most of the errors go back to one line. The agent did annotate `trackedItems()`, but inside a one-line comment, after
+a sentence:
+
+```php
+/** The items of the todo list, followed by deleted items that time was spent on. @return list<TrackedItem> */
+public function trackedItems(): array
+```
+
+PHPDoc reads a tag only at the start of a line, so PHPStan never sees `@return list<TrackedItem>`: to PHPStan the
+method returns an `array` of nothing known. The project's own rule reports that, and wherever the screen and the tests
+use one of these items, PHPStan reports a property or a method on `mixed`.
+
+The rest are the patterns of the first unguided attempt: the time entries' JSON store trusts what it decodes
+(`JsonFileTimeEntryStore`, lines 29–36), the screen's styles use named arguments, and stopping a timer replaces an
+element of a list by its index, so that what is stored is no longer known to be a list.
+
+### 3. Code style: 7 files
+
+All of it is layout that `composer quality` fixes by itself, such as the arguments of a call with four or more one
+below the other, and aligned parameters. The files: `JsonFileTimeEntryStore`, `TimeEntry`,
+`TimeTrackingDomainService`, `TimeTrackingScreen`, `TodoListDomainService`, `JsonFileTimeEntryStoreTest` and
+`TodoListScreenTest`.
+
+### Compared with the first unguided attempt
+
+The first attempt (tag `v2-unguided-attempt-1`) was built on `main` as it was before its annotations and comments were
+removed. It yielded 19 PHPStan errors and nothing from the project's own rules: it wrote `@return list<…>` the way the
+code it found did. This attempt, on a `main` without a single annotation to copy, wrote its annotations itself, one of
+them where PHPDoc does not read it, and yields 50 errors, one of them from the project's own rule. It also reaches
+deeper into the todo list: the first attempt asked the todo list's domain service for the items, this one reads the
+todo list's store.
