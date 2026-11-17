@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Todo;
 
+use App\Tests\Unit\TimeTracking\InMemoryTimeEntryStore;
+use App\TimeTracking\Domain\Service\TimeTrackingDomainService;
 use App\Todo\Domain\Service\TodoListDomainService;
 use App\Todo\Presentation\Tui\TodoListScreen;
 use PHPUnit\Framework\TestCase;
@@ -24,7 +26,8 @@ final class TodoListScreenTest extends TestCase
 
     protected function setUp(): void
     {
-        $todoList = new TodoListDomainService(new InMemoryTodoItemStore());
+        $items    = new InMemoryTodoItemStore();
+        $todoList = new TodoListDomainService($items, new TimeTrackingDomainService(new InMemoryTimeEntryStore(), $items));
 
         $this->terminal = new VirtualTerminal(100, 24);
         $this->tui      = TodoListScreen::createTui($this->terminal);
