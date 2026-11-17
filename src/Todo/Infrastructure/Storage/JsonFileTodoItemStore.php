@@ -9,9 +9,6 @@ use App\Todo\Domain\Service\TodoItemStoreInterface;
 use DateTimeImmutable;
 use RuntimeException;
 
-/**
- * Keeps the todo list's items in one JSON file, readable by hand.
- */
 final readonly class JsonFileTodoItemStore implements TodoItemStoreInterface
 {
     private const string DATE_FORMAT = 'Y-m-d\TH:i:s.uP';

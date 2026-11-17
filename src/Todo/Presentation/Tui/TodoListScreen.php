@@ -26,14 +26,8 @@ use Symfony\Component\Tui\Widget\SelectListWidget;
 use Symfony\Component\Tui\Widget\TextWidget;
 use Symfony\Component\Tui\Widget\Util\StringUtils;
 
-/**
- * The todo list's screen: a line to add an item, a notice for what was refused, and the list of items.
- */
 final class TodoListScreen
 {
-    /**
-     * On top of each widget's own keys: Enter adds an item or marks the selected one done, Escape quits
-     */
     private const array KEYBINDINGS = [
         'quit'           => ['ctrl+c'],
         'focus_next'     => [Key::TAB],
@@ -53,9 +47,6 @@ final class TodoListScreen
     ) {
     }
 
-    /**
-     * The Tui with the screen's styles and keybindings, on the real terminal unless another one is given.
-     */
     public static function createTui(TerminalInterface $terminal = new Terminal()): Tui
     {
         return new Tui(self::styleSheet(), $terminal, new Keybindings(self::KEYBINDINGS));
@@ -145,9 +136,6 @@ final class TodoListScreen
         return true;
     }
 
-    /**
-     * Carries out one command and shows the list as it is afterwards, or the reason the command was refused.
-     */
     private function carryOut(callable $command): void
     {
         try {
@@ -170,7 +158,6 @@ final class TodoListScreen
         $this->list->setItems(array_map($this->listItem(...), $items));
         $this->list->setSelectedIndex(min($selectedIndex, count($items) - 1));
 
-        // The list stays in the widget tree while it has items, as taking it out takes its focus away
         $shown = $items === [] ? $this->emptyList : $this->list;
         if ($this->itemsArea->all() !== [$shown]) {
             $this->tui->setFocus($this->input);
@@ -197,9 +184,6 @@ final class TodoListScreen
         return -1;
     }
 
-    /**
-     * @return array{value: string, label: string}
-     */
     private function listItem(TodoItem $item): array
     {
         $text = StringUtils::stripControlBytes($item->text);

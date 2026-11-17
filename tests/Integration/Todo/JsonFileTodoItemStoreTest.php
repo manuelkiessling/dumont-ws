@@ -9,9 +9,6 @@ use App\Todo\Domain\Model\TodoItem;
 use App\Todo\Domain\Service\TodoItemStoreInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
-/**
- * The store the application is wired with keeps its items in a file, and reads them back as they were.
- */
 final class JsonFileTodoItemStoreTest extends KernelTestCase
 {
     private TodoItemStoreInterface $store;

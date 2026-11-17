@@ -6,9 +6,6 @@ namespace App\Todo\Domain\Model;
 
 use DateTimeImmutable;
 
-/**
- * One item of the todo list: a line of text that is open until it is marked done.
- */
 final readonly class TodoItem
 {
     public function __construct(

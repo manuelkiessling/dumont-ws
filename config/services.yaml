@@ -1,5 +1,4 @@
 parameters:
-    # Where the todo list keeps its items: one JSON file, no database
     app.todo_items_file: '%kernel.project_dir%/var/data/todo_items.json'
 
 services:
@@ -16,7 +15,6 @@ services:
             - '../src/*/Domain/Model/'
             - '../src/*/Domain/Exception/'
 
-    # Logs go to var/log/<environment>.log, not to the terminal
     logger:
         class: Symfony\Component\HttpKernel\Log\Logger
         arguments: ['info', '%kernel.logs_dir%/%kernel.environment%.log']

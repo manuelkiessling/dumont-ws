@@ -10,10 +10,6 @@ use App\Todo\Domain\Exception\ItemNotOnTheListException;
 use App\Todo\Domain\Model\TodoItem;
 use Symfony\Component\Uid\Uuid;
 
-/**
- * The todo list's use cases: read the list, add an item, mark one done, delete one. Every rule of the list is
- * decided here.
- */
 final readonly class TodoListDomainService
 {
     public const int MAX_TEXT_LENGTH = 200;
@@ -23,17 +19,11 @@ final readonly class TodoListDomainService
     ) {
     }
 
-    /**
-     * @return list<TodoItem>
-     */
     public function items(): array
     {
         return $this->store->load();
     }
 
-    /**
-     * @throws InvalidItemTextException
-     */
     public function addItem(string $text): TodoItem
     {
         $text = mb_trim($text);
@@ -57,11 +47,6 @@ final readonly class TodoListDomainService
         return $item;
     }
 
-    /**
-     * Marking an item done that is done already changes nothing and succeeds, so that a double submit is harmless.
-     *
-     * @throws ItemNotOnTheListException
-     */
     public function markItemDone(string $itemId): void
     {
         $items = $this->store->load();
@@ -75,9 +60,6 @@ final readonly class TodoListDomainService
         $this->store->store($items);
     }
 
-    /**
-     * @throws ItemNotOnTheListException
-     */
     public function deleteItem(string $itemId): void
     {
         $items = $this->store->load();
@@ -87,11 +69,6 @@ final readonly class TodoListDomainService
         $this->store->store($items);
     }
 
-    /**
-     * @param list<TodoItem> $items
-     *
-     * @throws ItemNotOnTheListException
-     */
     private function indexOf(array $items, string $itemId): int
     {
         foreach ($items as $index => $item) {

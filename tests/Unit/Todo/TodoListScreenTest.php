@@ -11,9 +11,6 @@ use Symfony\Component\Tui\Terminal\ScreenBuffer;
 use Symfony\Component\Tui\Terminal\VirtualTerminal;
 use Symfony\Component\Tui\Tui;
 
-/**
- * Drives the screen as a person would, key by key, on a virtual terminal, and reads what the screen shows.
- */
 final class TodoListScreenTest extends TestCase
 {
     private const string ENTER  = "\r";
@@ -120,9 +117,6 @@ final class TodoListScreenTest extends TestCase
         }
     }
 
-    /**
-     * What a person sees: the terminal's output, written as updates and cursor moves, played back onto a screen.
-     */
     private function screen(): string
     {
         $this->tui->processRender();

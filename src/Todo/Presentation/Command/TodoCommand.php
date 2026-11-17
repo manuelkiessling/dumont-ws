@@ -8,9 +8,6 @@ use App\Todo\Presentation\Tui\TodoListScreen;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 
-/**
- * Opens the todo list in the terminal and keeps it open until the person quits.
- */
 #[AsCommand(name: 'app:todo', description: 'Opens the todo list')]
 final readonly class TodoCommand
 {
