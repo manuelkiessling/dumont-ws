@@ -8,27 +8,44 @@ use App\Common\Domain\Service\DateAndTimeService;
 use App\Todo\Domain\Exception\InvalidItemTextException;
 use App\Todo\Domain\Exception\ItemNotOnTheListException;
 use App\Todo\Domain\Service\TodoListDomainService;
+use App\Todo\Facade\SymfonyEvent\TodoItemDeletedSymfonyEvent;
+use App\Todo\Facade\SymfonyEvent\TodoItemMarkedDoneSymfonyEvent;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Clock\Clock;
+use Symfony\Component\Clock\MockClock;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 final class TodoListDomainServiceTest extends TestCase
 {
+    private MockClock $clock;
+    private EventDispatcher $events;
     private TodoListDomainService $todoList;
+
+    /** @var list<object> */
+    private array $dispatched = [];
 
     protected function setUp(): void
     {
-        $this->todoList = new TodoListDomainService(new InMemoryTodoItemStore());
+        $this->clock = new MockClock('2026-11-17 09:00:00');
+        Clock::set($this->clock);
+
+        $this->events = new EventDispatcher();
+        foreach ([TodoItemMarkedDoneSymfonyEvent::class, TodoItemDeletedSymfonyEvent::class] as $eventClass) {
+            $this->events->addListener($eventClass, function (object $event): void {
+                $this->dispatched[] = $event;
+            });
+        }
+
+        $this->todoList = new TodoListDomainService(new InMemoryTodoItemStore(), $this->events);
     }
 
     public function testAnAddedItemIsOpenAndTrimmed(): void
     {
-        $before = DateAndTimeService::getDateTimeImmutable();
-        $item   = $this->todoList->addItem('  Buy milk  ');
-        $after  = DateAndTimeService::getDateTimeImmutable();
+        $item = $this->todoList->addItem('  Buy milk  ');
 
         self::assertSame('Buy milk', $item->text);
         self::assertFalse($item->isDone());
-        self::assertGreaterThanOrEqual($before, $item->addedAt);
-        self::assertLessThanOrEqual($after, $item->addedAt);
+        self::assertEquals(DateAndTimeService::getDateTimeImmutable('2026-11-17 09:00:00'), $item->addedAt);
         self::assertEquals([$item], $this->todoList->items());
     }
 
@@ -66,24 +83,24 @@ final class TodoListDomainServiceTest extends TestCase
     public function testMarkingAnItemDoneRecordsWhen(): void
     {
         $item = $this->todoList->addItem('Buy milk');
+        $this->clock->sleep(60);
 
         $this->todoList->markItemDone($item->id);
 
         $done = $this->todoList->items()[0];
         self::assertTrue($done->isDone());
-        self::assertNotNull($done->doneAt);
-        self::assertGreaterThanOrEqual($item->addedAt, $done->doneAt);
+        self::assertEquals(DateAndTimeService::getDateTimeImmutable('2026-11-17 09:01:00'), $done->doneAt);
     }
 
     public function testMarkingADoneItemDoneAgainChangesNothing(): void
     {
         $item = $this->todoList->addItem('Buy milk');
         $this->todoList->markItemDone($item->id);
-        $firstDoneAt = $this->todoList->items()[0]->doneAt;
+        $this->clock->sleep(60);
 
         $this->todoList->markItemDone($item->id);
 
-        self::assertEquals($firstDoneAt, $this->todoList->items()[0]->doneAt);
+        self::assertEquals(DateAndTimeService::getDateTimeImmutable('2026-11-17 09:00:00'), $this->todoList->items()[0]->doneAt);
     }
 
     public function testADeletedItemIsGone(): void
@@ -110,5 +127,19 @@ final class TodoListDomainServiceTest extends TestCase
         $this->expectException(ItemNotOnTheListException::class);
 
         $this->todoList->deleteItem($item->id);
+    }
+
+    public function testMarkingDoneAndDeletingAreAnnounced(): void
+    {
+        $item = $this->todoList->addItem('Buy milk');
+
+        $this->todoList->markItemDone($item->id);
+        $this->todoList->markItemDone($item->id);
+        $this->todoList->deleteItem($item->id);
+
+        self::assertEquals(
+            [new TodoItemMarkedDoneSymfonyEvent($item->id), new TodoItemDeletedSymfonyEvent($item->id)],
+            $this->dispatched
+        );
     }
 }

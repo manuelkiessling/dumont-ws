@@ -7,6 +7,9 @@ namespace App\Tests\Unit\Todo;
 use App\Todo\Domain\Service\TodoListDomainService;
 use App\Todo\Presentation\Tui\TodoListScreen;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Clock\Clock;
+use Symfony\Component\Clock\MockClock;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Tui\Terminal\ScreenBuffer;
 use Symfony\Component\Tui\Terminal\VirtualTerminal;
 use Symfony\Component\Tui\Tui;
@@ -27,7 +30,8 @@ final class TodoListScreenTest extends TestCase
 
     protected function setUp(): void
     {
-        $todoList = new TodoListDomainService(new InMemoryTodoItemStore());
+        Clock::set(new MockClock('2026-11-17 09:00:00'));
+        $todoList = new TodoListDomainService(new InMemoryTodoItemStore(), new EventDispatcher());
 
         $this->terminal = new VirtualTerminal(100, 24);
         $this->tui      = TodoListScreen::createTui($this->terminal);
@@ -83,7 +87,7 @@ final class TodoListScreenTest extends TestCase
 
         $screen = $this->screen();
         self::assertStringContainsString('[ ] Buy milk', $screen);
-        self::assertStringContainsString('[x] Call mum  (done ', $screen);
+        self::assertStringContainsString('[x] Call mum  (done 2026-11-17 09:00)', $screen);
 
         $this->press('d');
 

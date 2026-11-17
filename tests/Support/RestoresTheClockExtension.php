@@ -13,6 +13,10 @@ use PHPUnit\TextUI\Configuration\Configuration;
 use Symfony\Component\Clock\Clock;
 use Symfony\Component\Clock\NativeClock;
 
+/**
+ * After every test, the clock is the real one again: a test may freeze it (`Clock::set(new MockClock(…))`) and need
+ * not restore it, and no test starts on the time another one left behind. Registered in `phpunit.dist.xml`.
+ */
 final class RestoresTheClockExtension implements Extension
 {
     public function bootstrap(Configuration $configuration, Facade $facade, ParameterCollection $parameters): void

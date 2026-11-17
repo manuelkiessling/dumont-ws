@@ -5,6 +5,7 @@
     "license": "proprietary",
     "require": {
         "php": "^8.5",
+        "revolt/event-loop": "^1.0",
         "symfony/clock": "8.1.*",
         "symfony/console": "8.1.*",
         "symfony/dotenv": "8.1.*",

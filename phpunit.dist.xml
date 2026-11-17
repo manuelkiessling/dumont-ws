@@ -23,6 +23,7 @@
     </testsuites>
 
     <extensions>
+        <!-- No test starts on a clock another one froze -->
         <bootstrap class="App\Tests\Support\RestoresTheClockExtension"/>
     </extensions>
 

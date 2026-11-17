@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Todo\Presentation\Tui;
 
+use App\Common\Presentation\Tui\ScreenStyleSheet;
 use App\Todo\Domain\Exception\TodoRefusedException;
 use App\Todo\Domain\Model\TodoItem;
 use App\Todo\Domain\Service\TodoListDomainService;
@@ -12,11 +13,6 @@ use Symfony\Component\Tui\Event\SelectEvent;
 use Symfony\Component\Tui\Event\SubmitEvent;
 use Symfony\Component\Tui\Input\Key;
 use Symfony\Component\Tui\Input\Keybindings;
-use Symfony\Component\Tui\Style\Border;
-use Symfony\Component\Tui\Style\BorderPattern;
-use Symfony\Component\Tui\Style\Padding;
-use Symfony\Component\Tui\Style\Style;
-use Symfony\Component\Tui\Style\StyleSheet;
 use Symfony\Component\Tui\Terminal\Terminal;
 use Symfony\Component\Tui\Terminal\TerminalInterface;
 use Symfony\Component\Tui\Tui;
@@ -58,26 +54,7 @@ final class TodoListScreen
      */
     public static function createTui(TerminalInterface $terminal = new Terminal()): Tui
     {
-        return new Tui(self::styleSheet(), $terminal, new Keybindings(self::KEYBINDINGS));
-    }
-
-    private static function styleSheet(): StyleSheet
-    {
-        $border     = Border::all(1, BorderPattern::ROUNDED, 'gray');
-        $focusedBox = new Style(border: Border::all(1, BorderPattern::ROUNDED, 'cyan'));
-
-        return new StyleSheet([
-            ':root'                                => new Style(padding: Padding::xy(2, 1), gap: 1),
-            '.title'                               => new Style(bold: true, color: 'cyan'),
-            InputWidget::class                     => new Style(Padding::xy(2), $border),
-            InputWidget::class . ':focus'          => $focusedBox,
-            SelectListWidget::class                => new Style(Padding::xy(2, 1), $border),
-            SelectListWidget::class . ':focus'     => $focusedBox,
-            '.empty-list'                          => new Style(Padding::xy(2, 1), $border, color: 'gray'),
-            '.notice'                              => new Style(bold: true, color: 'yellow'),
-            '.hidden'                              => new Style(hidden: true),
-            '.help'                                => new Style(color: 'gray'),
-        ]);
+        return new Tui(ScreenStyleSheet::create(), $terminal, new Keybindings(self::KEYBINDINGS));
     }
 
     public function mount(Tui $tui): void
