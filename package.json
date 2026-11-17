@@ -1,9 +1,0 @@
-{
-  "name": "dumont-ws",
-  "version": "0.1.0",
-  "private": true,
-  "description": "Sample application for the workshop",
-  "scripts": {
-    "start": "node server.js"
-  }
-}

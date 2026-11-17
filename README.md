@@ -1,17 +1,17 @@
 # dumont-ws
 
-The sample application for the workshop: a tiny Node.js web server without dependencies.
+A sample Todo application.
+
+## Running it
+
+Everything runs in Docker; nothing but Docker is needed on the host.
 
 ```bash
-npm start          # http://localhost:3000
+docker compose run --rm app composer install       # installs dependencies
+docker compose up                                  # serves http://localhost:8000
+docker compose run --rm app vendor/bin/phpunit     # runs the tests
+docker compose run --rm app bin/console debug:router
 ```
 
-## Branches
-
-| Branch | What it adds |
-|---|---|
-| `main` | A page that says hello |
-| `step-1` | `GET /api/time`, the server's time as JSON |
-| `step-2` | A visitor counter at `GET /api/visits`, shown on the page |
-
-Switch with `git switch step-1`; each step builds on the one before.
+The list is kept in `var/data/todo_items.json` (the tests use `var/test/todo_items.json`). Delete the file to start
+over.
