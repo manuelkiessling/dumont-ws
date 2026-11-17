@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Todo\Domain\Service;
 
+use App\Common\Domain\Service\DateAndTimeService;
 use App\Todo\Domain\Exception\InvalidItemTextException;
 use App\Todo\Domain\Exception\ItemNotOnTheListException;
 use App\Todo\Domain\Model\TodoItem;
-use Psr\Clock\ClockInterface;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -19,8 +19,7 @@ final readonly class TodoListDomainService
     public const int MAX_TEXT_LENGTH = 200;
 
     public function __construct(
-        private TodoItemStoreInterface $store,
-        private ClockInterface         $clock
+        private TodoItemStoreInterface $store
     ) {
     }
 
@@ -49,7 +48,7 @@ final readonly class TodoListDomainService
             throw InvalidItemTextException::tooLong(self::MAX_TEXT_LENGTH);
         }
 
-        $item  = new TodoItem(Uuid::v7()->toRfc4122(), $text, $this->clock->now());
+        $item  = new TodoItem(Uuid::v7()->toRfc4122(), $text, DateAndTimeService::getDateTimeImmutable());
         $items = $this->store->load();
 
         $items[] = $item;
@@ -72,7 +71,7 @@ final readonly class TodoListDomainService
             return;
         }
 
-        $items[$index] = $items[$index]->markedDoneAt($this->clock->now());
+        $items[$index] = $items[$index]->markedDoneAt(DateAndTimeService::getDateTimeImmutable());
         $this->store->store($items);
     }
 

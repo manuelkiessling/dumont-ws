@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Todo;
 
+use App\Common\Domain\Service\DateAndTimeService;
 use App\Todo\Domain\Model\TodoItem;
 use App\Todo\Domain\Service\TodoItemStoreInterface;
-use DateTimeImmutable;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
@@ -37,12 +37,12 @@ final class JsonFileTodoItemStoreTest extends KernelTestCase
     public function testStoredItemsAreReadBackAsTheyWere(): void
     {
         $items = [
-            new TodoItem('0195f0a2-5c3b-7d4e-8f00-123456789abc', 'Buy milk', new DateTimeImmutable('2026-11-17 09:00:00.123456')),
+            new TodoItem('0195f0a2-5c3b-7d4e-8f00-123456789abc', 'Buy milk', DateAndTimeService::getDateTimeImmutable('2026-11-17 09:00:00.123456')),
             new TodoItem(
                 '0195f0a2-5c3b-7d4e-8f00-123456789abd',
                 'Grüße an Oma',
-                new DateTimeImmutable('2026-11-17 09:01:00'),
-                new DateTimeImmutable('2026-11-17 09:02:00.5')
+                DateAndTimeService::getDateTimeImmutable('2026-11-17 09:01:00'),
+                DateAndTimeService::getDateTimeImmutable('2026-11-17 09:02:00.5')
             ),
         ];
 

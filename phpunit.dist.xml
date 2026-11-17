@@ -22,6 +22,10 @@
         </testsuite>
     </testsuites>
 
+    <extensions>
+        <bootstrap class="App\Tests\Support\RestoresTheClockExtension"/>
+    </extensions>
+
     <source>
         <include>
             <directory>src</directory>
