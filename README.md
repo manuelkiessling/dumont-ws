@@ -110,7 +110,7 @@ the todo list has none.
 |---|---|---|
 | 1 | `noAssociativeArraysAcrossBoundaries.return` | the project's rule: `TimeTrackingDomainService::trackedItems()` returns an array that is no `list` |
 | 4 | `missingType.iterableValue` | arrays without the type of their values: `trackedItems()`, `withTimersStopped()`, `TimeTrackingScreen::listItem()`, the in-memory test store's property |
-| 14 | `argument.type` | mostly the consequence of the above; also the time entries' JSON store, and lists that are lost as lists |
+| 14 | `argument.type` | mostly the consequence of the above; also the time entries' JSON store, and the lists `withTimersStopped()` returns |
 | 13 | `property.nonObject`, `method.nonObject`, `encapsedStringPart.nonString` | the consequence of the above: the screen and the tests use a tracked item that PHPStan only knows as `mixed` |
 | 3 | `return.type` | the JSON store and the in-memory store return no `list`, a test helper returns `mixed` |
 | 12 | `ergebnis.noNamedArgument` | `new Style(padding: …, gap: …, bold: …, color: …, hidden: …, border: …)` in `TimeTrackingScreen` |
@@ -128,9 +128,12 @@ PHPDoc reads a tag only at the start of a line, so PHPStan never sees `@return l
 method returns an `array` of nothing known. The project's own rule reports that, and wherever the screen and the tests
 use one of these items, PHPStan reports a property or a method on `mixed`.
 
+The same happens once more: `withTimersStopped()` has `/** @param list<TimeEntry> $entries @return list<TimeEntry> */`,
+two tags on one line, so its `@return` is read as part of the description of `$entries`. Its result is an `array` of
+nothing known, and what `startTimer()` and `stopTimerOf()` store is no longer known to be a list.
+
 The rest are the patterns of the first unguided attempt: the time entries' JSON store trusts what it decodes
-(`JsonFileTimeEntryStore`, lines 29–36), the screen's styles use named arguments, and stopping a timer replaces an
-element of a list by its index, so that what is stored is no longer known to be a list.
+(`JsonFileTimeEntryStore`, lines 29–36), and the screen's styles use named arguments.
 
 ### 3. Code style: 7 files
 
@@ -143,7 +146,7 @@ below the other, and aligned parameters. The files: `JsonFileTimeEntryStore`, `T
 
 The first attempt (tag `v2-unguided-attempt-1`) was built on `main` as it was before its annotations and comments were
 removed. It yielded 19 PHPStan errors and nothing from the project's own rules: it wrote `@return list<…>` the way the
-code it found did. This attempt, on a `main` without a single annotation to copy, wrote its annotations itself, one of
-them where PHPDoc does not read it, and yields 50 errors, one of them from the project's own rule. It also reaches
+code it found did. This attempt, on a `main` without a single annotation to copy, wrote its annotations itself, two of
+them where PHPDoc does not read them, and yields 50 errors, one of them from the project's own rule. It also reaches
 deeper into the todo list: the first attempt asked the todo list's domain service for the items, this one reads the
 todo list's store.
