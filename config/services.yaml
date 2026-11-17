@@ -1,6 +1,8 @@
 parameters:
     # Where the todo list keeps its items: one JSON file, no database
     app.todo_items_file: '%kernel.project_dir%/var/data/todo_items.json'
+    # Where the time tracking keeps the periods the timers ran
+    app.time_periods_file: '%kernel.project_dir%/var/data/time_periods.json'
 
 services:
     _defaults:
@@ -8,6 +10,7 @@ services:
         autoconfigure: true
         bind:
             string $todoItemsFile: '%app.todo_items_file%'
+            string $timePeriodsFile: '%app.time_periods_file%'
 
     App\:
         resource: '../src/'
@@ -24,3 +27,4 @@ services:
 when@test:
     parameters:
         app.todo_items_file: '%kernel.project_dir%/var/test/todo_items.json'
+        app.time_periods_file: '%kernel.project_dir%/var/test/time_periods.json'

@@ -13,10 +13,11 @@ use PHPUnit\Framework\TestCase;
 final class TodoListDomainServiceTest extends TestCase
 {
     private TodoListDomainService $todoList;
+    private RecordingItemTimers $timers;
 
     protected function setUp(): void
     {
-        $this->todoList = new TodoListDomainService(new InMemoryTodoItemStore());
+        $this->todoList = new TodoListDomainService(new InMemoryTodoItemStore(), $this->timers = new RecordingItemTimers());
     }
 
     public function testAnAddedItemIsOpenAndTrimmed(): void
@@ -110,5 +111,23 @@ final class TodoListDomainServiceTest extends TestCase
         $this->expectException(ItemNotOnTheListException::class);
 
         $this->todoList->deleteItem($item->id);
+    }
+
+    public function testMarkingAnItemDoneStopsItsTimer(): void
+    {
+        $item = $this->todoList->addItem('Buy milk');
+
+        $this->todoList->markItemDone($item->id);
+
+        self::assertSame([$item->id], $this->timers->stopped);
+    }
+
+    public function testDeletingAnItemStopsItsTimer(): void
+    {
+        $item = $this->todoList->addItem('Buy milk');
+
+        $this->todoList->deleteItem($item->id);
+
+        self::assertSame([$item->id], $this->timers->stopped);
     }
 }

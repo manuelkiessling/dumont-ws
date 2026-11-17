@@ -27,7 +27,7 @@ final class TodoListScreenTest extends TestCase
 
     protected function setUp(): void
     {
-        $todoList = new TodoListDomainService(new InMemoryTodoItemStore());
+        $todoList = new TodoListDomainService(new InMemoryTodoItemStore(), new RecordingItemTimers());
 
         $this->terminal = new VirtualTerminal(100, 24);
         $this->tui      = TodoListScreen::createTui($this->terminal);

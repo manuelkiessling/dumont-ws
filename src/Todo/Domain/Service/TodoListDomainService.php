@@ -11,7 +11,7 @@ use App\Todo\Domain\Model\TodoItem;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * The todo list's use cases: read the list, add an item, mark one done, delete one. Every rule of the list is
+ * The todo list's use cases: read the list, add an item, mark one done, delete one. Done and deleted items have no running timer. Every rule of the list is
  * decided here.
  */
 final readonly class TodoListDomainService
@@ -19,7 +19,8 @@ final readonly class TodoListDomainService
     public const int MAX_TEXT_LENGTH = 200;
 
     public function __construct(
-        private TodoItemStoreInterface $store
+        private TodoItemStoreInterface $store,
+        private ItemTimersInterface $timers
     ) {
     }
 
@@ -73,6 +74,7 @@ final readonly class TodoListDomainService
 
         $items[$index] = $items[$index]->markedDoneAt(DateAndTimeService::getDateTimeImmutable());
         $this->store->store($items);
+        $this->timers->stopTimerOf($itemId);
     }
 
     /**
@@ -85,6 +87,7 @@ final readonly class TodoListDomainService
 
         array_splice($items, $index, 1);
         $this->store->store($items);
+        $this->timers->stopTimerOf($itemId);
     }
 
     /**

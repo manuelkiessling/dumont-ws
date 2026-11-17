@@ -58,7 +58,10 @@ final readonly class JsonFileTodoItemStore implements TodoItemStoreInterface
         }
 
         $json = json_encode($rows, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
-        file_put_contents($this->todoItemsFile, $json . "\n", LOCK_EX);
+        // Replaced in one step, so that another terminal never reads half of the file
+        $temp = $this->todoItemsFile . '.' . getmypid() . '.tmp';
+        file_put_contents($temp, $json . "\n");
+        rename($temp, $this->todoItemsFile);
     }
 
     private function date(string $value): DateTimeImmutable
