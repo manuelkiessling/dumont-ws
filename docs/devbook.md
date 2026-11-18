@@ -10,6 +10,7 @@ after cloning builds the image and installs the dependencies.
 
 ```bash
 docker compose run --rm app                          # opens the todo list (bin/console app:todo)
+docker compose run --rm app bin/console app:time     # opens the time tracking
 docker compose run --rm app bin/console <command>    # any console command
 docker compose run --rm app composer test            # all tests: architecture, unit and integration
 docker compose run --rm app composer quality         # fixes the code style, checks it, runs PHPStan, checks dependencies

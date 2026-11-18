@@ -9,15 +9,29 @@ use App\Todo\Domain\Exception\InvalidItemTextException;
 use App\Todo\Domain\Exception\ItemNotOnTheListException;
 use App\Todo\Domain\Model\TodoItem;
 use App\Todo\Domain\Service\TodoListDomainService;
+use App\Todo\Facade\SymfonyEvent\ItemDeletedSymfonyEvent;
+use App\Todo\Facade\SymfonyEvent\ItemMarkedDoneSymfonyEvent;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 final class TodoListDomainServiceTest extends TestCase
 {
     private TodoListDomainService $todoList;
 
+    /** @var list<object> */
+    private array $announced = [];
+
     protected function setUp(): void
     {
-        $this->todoList = new TodoListDomainService(new InMemoryTodoItemStore());
+        $events = new EventDispatcher();
+        $events->addListener(ItemMarkedDoneSymfonyEvent::class, function (object $event): void {
+            $this->announced[] = $event;
+        });
+        $events->addListener(ItemDeletedSymfonyEvent::class, function (object $event): void {
+            $this->announced[] = $event;
+        });
+
+        $this->todoList = new TodoListDomainService(new InMemoryTodoItemStore(), $events);
     }
 
     public function testAnAddedItemIsOpenAndTrimmed(): void
@@ -114,5 +128,24 @@ final class TodoListDomainServiceTest extends TestCase
         $this->expectException(ItemNotOnTheListException::class);
 
         $this->todoList->deleteItem($item->id);
+    }
+
+    public function testMarkingAnItemDoneAnnouncesItOnce(): void
+    {
+        $item = $this->todoList->addItem('Buy milk');
+
+        $this->todoList->markItemDone($item->id);
+        $this->todoList->markItemDone($item->id);
+
+        self::assertEquals([new ItemMarkedDoneSymfonyEvent($item->id)], $this->announced);
+    }
+
+    public function testDeletingAnItemAnnouncesIt(): void
+    {
+        $item = $this->todoList->addItem('Buy milk');
+
+        $this->todoList->deleteItem($item->id);
+
+        self::assertEquals([new ItemDeletedSymfonyEvent($item->id)], $this->announced);
     }
 }

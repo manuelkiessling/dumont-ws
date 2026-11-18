@@ -8,6 +8,9 @@ use App\Common\Domain\Service\DateAndTimeService;
 use App\Todo\Domain\Exception\InvalidItemTextException;
 use App\Todo\Domain\Exception\ItemNotOnTheListException;
 use App\Todo\Domain\Model\TodoItem;
+use App\Todo\Facade\SymfonyEvent\ItemDeletedSymfonyEvent;
+use App\Todo\Facade\SymfonyEvent\ItemMarkedDoneSymfonyEvent;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -19,7 +22,8 @@ final readonly class TodoListDomainService
     public const int MAX_TEXT_LENGTH = 200;
 
     public function __construct(
-        private TodoItemStoreInterface $store
+        private TodoItemStoreInterface   $store,
+        private EventDispatcherInterface $events
     ) {
     }
 
@@ -76,6 +80,7 @@ final readonly class TodoListDomainService
             static fn (TodoItem $item): TodoItem => $item->id === $itemId ? $item->markedDoneAt($doneAt) : $item,
             $items
         ));
+        $this->events->dispatch(new ItemMarkedDoneSymfonyEvent($itemId));
     }
 
     /**
@@ -88,6 +93,7 @@ final readonly class TodoListDomainService
 
         array_splice($items, $index, 1);
         $this->store->store($items);
+        $this->events->dispatch(new ItemDeletedSymfonyEvent($itemId));
     }
 
     /**

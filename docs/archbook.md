@@ -115,8 +115,40 @@ The worked example to copy:
 - **Port** `TodoItemStoreInterface`, implemented by `JsonFileTodoItemStore` (`var/data/todo_items.json`).
 - **Refusals** `InvalidItemTextException` and `ItemNotOnTheListException`, under `TodoRefusedException`.
 - **Screen** `TodoListScreen` and its command `TodoCommand` (`app:todo`), see the [TUI book](tuibook.md).
+- **Facade** `TodoListFacadeInterface` (`items()` as `TodoItemDto`s: ID, text, done), implemented by `TodoListFacade`.
+- **Facade events** `ItemMarkedDoneSymfonyEvent` and `ItemDeletedSymfonyEvent`, dispatched by `TodoListDomainService`
+  (the first only when the item was open) with the item's ID.
 - **Tests** on every level: `tests/Unit/Todo` (the domain service with an in-memory store, the screen on a virtual
   terminal) and `tests/Integration/Todo` (the JSON store as the container wires it).
+
+
+## The TimeTracking vertical
+
+Time spent on the items of the todo list. It depends on `Todo` (declared in `phpstan.dist.neon`) and uses only its
+facade and events.
+
+- **Models** `TimePeriod` (an item's ID, when its timer was started and, once it was stopped, when; a period without a
+  stop is the running timer) and `TrackedItem` (an item with its text, whether it is done, its seconds and since when
+  its timer runs).
+- **Domain service** `TimeTrackingDomainService`: `trackedItems()` (the items of the todo list, via the facade, with the
+  sum of all their periods), `startTimer()`, `stopRunningTimer()`, `stopTimerOf()`. Only one timer runs at a time:
+  starting one stops the other. Starting the timer that runs changes nothing. A timer cannot be started on a done item
+  (`ItemIsDoneException`) or one that is not on the list (`ItemNotOnTheListException`). Times are cut to the whole
+  second when taken. An item's time is the sum of its periods, a running period counted up to now.
+- **Port** `TimePeriodStoreInterface`, implemented by `JsonFileTimePeriodStore` (`var/data/time_periods.json`). It
+  keeps the periods of all items, so that the time of a deleted item is kept (it is not shown, as the screen lists the
+  todo list's items).
+- **Listener** `StopTimerOfItemListener` (Infrastructure) hears the Todo events and stops the item's timer when it is
+  marked done or deleted. It runs in the process of the todo list screen, as the files are all the screens share.
+- **Screen** `TimeTrackingScreen` and its command `TimeTrackingCommand` (`app:time`): Enter starts the selected item's
+  timer, `s` stops the running one. The command refreshes the screen every second (see the [TUI book](tuibook.md#refreshing)),
+  which counts a running time up and shows changes made on the todo list in another terminal. Quitting does not stop a
+  timer: it is a period in the file.
+- **Tests**: `tests/Unit/TimeTracking` (domain service with an in-memory store and a stand-in for the todo list facade,
+  the screen on a virtual terminal), `tests/Integration/TimeTracking` (the JSON store, and the listener with the real
+  services of both verticals).
+- Two processes may write `var/data/time_periods.json` at once; each write is the whole file under a lock, but a
+  read-modify-write is not atomic, so the last of two writes within the same instant wins.
 
 
 ## Adding a new vertical

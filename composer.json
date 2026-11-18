@@ -6,9 +6,12 @@
     "require": {
         "php": "^8.5",
         "ext-mbstring": "*",
+        "psr/event-dispatcher": "^1.0",
+        "revolt/event-loop": "^1.0",
         "symfony/clock": "8.1.*",
         "symfony/console": "8.1.*",
         "symfony/dotenv": "8.1.*",
+        "symfony/event-dispatcher": "8.1.*",
         "symfony/framework-bundle": "8.1.*",
         "symfony/http-kernel": "8.1.*",
         "symfony/runtime": "8.1.*",
