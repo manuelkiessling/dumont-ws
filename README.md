@@ -94,7 +94,8 @@ The agent's transcript shows that it never ran into a gate:
   in `docs/`; then the todo list's code, `phpstan.dist.neon`, three of the rules in `tools/PhpStan/Rules` (the two
   rules for Symfony events, and the one for DTOs beside a facade's), and the todo list's tests. Only then did it write
   its first file.
-- **Its first runs of the gates passed.** The first `composer test` passed all tests, and the first `composer quality`
+- **Its first runs of the gates passed.** Its first run of the tests stalled in the background and was stopped
+  unread; the next, the first whose result it saw, passed all tests. The first `composer quality`
   had nothing to report: PHP CS Fixer laid out 6 files anew, as `composer quality` does by itself, and PHPStan found no
   error. Nothing had to be changed in course.
 - **It built what the books describe:** a facade for the todo list (`TodoListFacadeInterface` with `TodoItemDto`), two
