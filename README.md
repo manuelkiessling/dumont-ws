@@ -112,9 +112,9 @@ The agent worked in 24 steps. The books, not the gates, did most of the steering
 Where the gates stopped it, it corrected course in one step each:
 
 - **PHPStan, level 10:** its integration test cast a container parameter, typed `mixed`, to a string. PHPStan reported
-  `cast.string` and `argument.type`; the agent checked the type first.
+  `cast.string` and `argument.type`; the agent replaced the cast with `assertIsString()`.
 - **The architecture tests:** its first full test run failed one test: the archbook had no section
-  `## The TimeTracking vertical`. The agent wrote it (it had planned the docs as its next step) and also described the
+  `## The TimeTracking vertical`. The agent wrote it and also described the
   Todo vertical's new facade and events in the archbook, and the new command in the devbook.
 
 Besides that, PHP itself refused one of its edits with a syntax error, which it fixed in the next step.
