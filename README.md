@@ -15,6 +15,9 @@ docker compose run --rm app composer quality:check   # checks the code style wit
 
 A change is done when `composer quality` and `composer test` pass.
 
+How the application is built and how to work on it is written down in [AGENTS.md](AGENTS.md) and the books in
+[`docs/`](docs/): the [archbook](docs/archbook.md), the [devbook](docs/devbook.md) and the [TUI book](docs/tuibook.md).
+
 ## Using it
 
 Type an item and press Enter to add it. Press Tab to move to the list.
