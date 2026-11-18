@@ -9,15 +9,29 @@ use App\Todo\Domain\Exception\InvalidItemTextException;
 use App\Todo\Domain\Exception\ItemNotOnTheListException;
 use App\Todo\Domain\Model\TodoItem;
 use App\Todo\Domain\Service\TodoListDomainService;
+use App\Todo\Facade\SymfonyEvent\ItemDeletedSymfonyEvent;
+use App\Todo\Facade\SymfonyEvent\ItemMarkedDoneSymfonyEvent;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 final class TodoListDomainServiceTest extends TestCase
 {
     private TodoListDomainService $todoList;
 
+    /** @var list<object> the facade events announced */
+    private array $events = [];
+
     protected function setUp(): void
     {
-        $this->todoList = new TodoListDomainService(new InMemoryTodoItemStore());
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addListener(ItemMarkedDoneSymfonyEvent::class, function (object $event): void {
+            $this->events[] = $event;
+        });
+        $dispatcher->addListener(ItemDeletedSymfonyEvent::class, function (object $event): void {
+            $this->events[] = $event;
+        });
+
+        $this->todoList = new TodoListDomainService(new InMemoryTodoItemStore(), $dispatcher);
     }
 
     public function testAnAddedItemIsOpenAndTrimmed(): void
@@ -114,5 +128,28 @@ final class TodoListDomainServiceTest extends TestCase
         $this->expectException(ItemNotOnTheListException::class);
 
         $this->todoList->deleteItem($item->id);
+    }
+
+    public function testMarkingAnItemDoneAnnouncesItOnce(): void
+    {
+        $item = $this->todoList->addItem('Buy milk');
+
+        $this->todoList->markItemDone($item->id);
+        $this->todoList->markItemDone($item->id);
+
+        self::assertCount(1, $this->events);
+        self::assertInstanceOf(ItemMarkedDoneSymfonyEvent::class, $this->events[0]);
+        self::assertSame($item->id, $this->events[0]->itemId);
+    }
+
+    public function testDeletingAnItemAnnouncesIt(): void
+    {
+        $item = $this->todoList->addItem('Buy milk');
+
+        $this->todoList->deleteItem($item->id);
+
+        self::assertCount(1, $this->events);
+        self::assertInstanceOf(ItemDeletedSymfonyEvent::class, $this->events[0]);
+        self::assertSame($item->id, $this->events[0]->itemId);
     }
 }

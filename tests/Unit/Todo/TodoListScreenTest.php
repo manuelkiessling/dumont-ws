@@ -7,6 +7,7 @@ namespace App\Tests\Unit\Todo;
 use App\Todo\Domain\Service\TodoListDomainService;
 use App\Todo\Presentation\Tui\TodoListScreen;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Tui\Terminal\ScreenBuffer;
 use Symfony\Component\Tui\Terminal\VirtualTerminal;
 use Symfony\Component\Tui\Tui;
@@ -27,7 +28,7 @@ final class TodoListScreenTest extends TestCase
 
     protected function setUp(): void
     {
-        $todoList = new TodoListDomainService(new InMemoryTodoItemStore());
+        $todoList = new TodoListDomainService(new InMemoryTodoItemStore(), new EventDispatcher());
 
         $this->terminal = new VirtualTerminal(100, 24);
         $this->tui      = TodoListScreen::createTui($this->terminal);

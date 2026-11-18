@@ -1,6 +1,8 @@
 parameters:
     # Where the todo list keeps its items: one JSON file, no database
     app.todo_items_file: '%kernel.project_dir%/var/data/todo_items.json'
+    # Where the time tracking keeps the periods its timers ran: one JSON file
+    app.time_entries_file: '%kernel.project_dir%/var/data/time_entries.json'
 
 services:
     _defaults:
@@ -8,6 +10,7 @@ services:
         autoconfigure: true
         bind:
             string $todoItemsFile: '%app.todo_items_file%'
+            string $timeEntriesFile: '%app.time_entries_file%'
 
     App\:
         resource: '../src/'
@@ -15,6 +18,8 @@ services:
             - '../src/Kernel.php'
             - '../src/*/Domain/Model/'
             - '../src/*/Domain/Exception/'
+            - '../src/*/Facade/Dto/'
+            - '../src/*/Facade/SymfonyEvent/'
 
     # Logs go to var/log/<environment>.log, not to the terminal
     logger:
@@ -24,3 +29,4 @@ services:
 when@test:
     parameters:
         app.todo_items_file: '%kernel.project_dir%/var/test/todo_items.json'
+        app.time_entries_file: '%kernel.project_dir%/var/test/time_entries.json'

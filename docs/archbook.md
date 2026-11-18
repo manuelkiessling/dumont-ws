@@ -110,6 +110,22 @@ The worked example to copy:
   terminal) and `tests/Integration/Todo` (the JSON store as the container wires it).
 
 
+## The TimeTracking vertical
+
+Tracks the time spent on the items of the todo list. It uses `Todo` only through its facade, and hears its events:
+
+- **Models** `TimeEntry` (one period a timer ran, to the second; no `stoppedAt` while it runs) and `TrackedItem` (an
+  item with the seconds spent and when its running timer started).
+- **Domain service** `TimeTrackingDomainService`: `trackedItems()`, `startTimer()`, `stopTimer()`, `stopTimerAt()`. At
+  most one timer runs; starting one stops another. No timer starts on a done item (`ItemIsDoneException`) or one that is
+  not on the list. Entries of deleted items are kept.
+- **Port** `TimeEntryStoreInterface`, implemented by `JsonFileTimeEntryStore` (`var/data/time_entries.json`).
+- **Listener** `StopTimerListener` hears `Todo`'s `ItemMarkedDoneSymfonyEvent` and `ItemDeletedSymfonyEvent` and stops the
+  item's timer at the time of the event.
+- **Screen** `TimeTrackingScreen` and its command `TimeTrackingCommand` (`app:time`), which refreshes every second.
+- `Todo` offers `TodoListFacadeInterface` (items as `TodoItemDto`) and announces the two events.
+
+
 ## Adding a new vertical
 
 1. Name its use cases: what it does, and what it refuses.

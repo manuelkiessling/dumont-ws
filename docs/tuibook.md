@@ -2,7 +2,7 @@
 
 How the application's screens are built and tested. A screen is the Presentation layer of a vertical; it is drawn
 with the [Symfony TUI component](https://symfony.com/doc/current/tui.html) (`symfony/tui`, experimental). The
-`TodoListScreen` is the worked example.
+`TodoListScreen` is the worked example, and `TimeTrackingScreen` (command `app:time`) one that refreshes.
 
 
 ## A screen and its command
@@ -58,8 +58,8 @@ stores. A screen that must show what another process changed reads it again (see
   classes (`.title`, `.notice`, `.hidden`, `.empty-list`, `.help`). Build a `Style` with its fluent methods
   (`new Style()->withBold()->withColor('cyan')`), never with named arguments.
 - The focused box has a cyan border, every other a gray one, so that a person sees where Tab moved.
-- A look that several screens share is one stylesheet in `src/Common/Presentation/Tui`, used by each screen's
-  `createTui()`.
+- A look that several screens share is one stylesheet in `src/Common/Presentation/Tui` (`ScreenStyleSheet`), used by
+  each screen's `createTui()`.
 
 
 ## Refreshing
