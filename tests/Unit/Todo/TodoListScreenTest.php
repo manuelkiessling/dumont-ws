@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Todo;
 
+use App\Todo\Domain\Service\ItemTimerInterface;
 use App\Todo\Domain\Service\TodoListDomainService;
 use App\Todo\Presentation\Tui\TodoListScreen;
 use PHPUnit\Framework\TestCase;
@@ -24,7 +25,11 @@ final class TodoListScreenTest extends TestCase
 
     protected function setUp(): void
     {
-        $todoList = new TodoListDomainService(new InMemoryTodoItemStore());
+        $todoList = new TodoListDomainService(new InMemoryTodoItemStore(), new class implements ItemTimerInterface {
+            public function stopTimerOf(string $itemId): void
+            {
+            }
+        });
 
         $this->terminal = new VirtualTerminal(100, 24);
         $this->tui      = TodoListScreen::createTui($this->terminal);

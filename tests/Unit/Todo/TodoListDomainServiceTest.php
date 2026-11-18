@@ -7,6 +7,7 @@ namespace App\Tests\Unit\Todo;
 use App\Common\Domain\Service\DateAndTimeService;
 use App\Todo\Domain\Exception\InvalidItemTextException;
 use App\Todo\Domain\Exception\ItemNotOnTheListException;
+use App\Todo\Domain\Service\ItemTimerInterface;
 use App\Todo\Domain\Service\TodoListDomainService;
 use PHPUnit\Framework\TestCase;
 
@@ -16,7 +17,11 @@ final class TodoListDomainServiceTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->todoList = new TodoListDomainService(new InMemoryTodoItemStore());
+        $this->todoList = new TodoListDomainService(new InMemoryTodoItemStore(), new class implements ItemTimerInterface {
+            public function stopTimerOf(string $itemId): void
+            {
+            }
+        });
     }
 
     public function testAnAddedItemIsOpenAndTrimmed(): void

@@ -15,7 +15,8 @@ final readonly class TodoListDomainService
     public const int MAX_TEXT_LENGTH = 200;
 
     public function __construct(
-        private TodoItemStoreInterface $store
+        private TodoItemStoreInterface $store,
+        private ItemTimerInterface     $timer
     ) {
     }
 
@@ -58,6 +59,7 @@ final readonly class TodoListDomainService
 
         $items[$index] = $items[$index]->markedDoneAt(DateAndTimeService::getDateTimeImmutable());
         $this->store->store($items);
+        $this->timer->stopTimerOf($itemId);
     }
 
     public function deleteItem(string $itemId): void
@@ -67,6 +69,7 @@ final readonly class TodoListDomainService
 
         array_splice($items, $index, 1);
         $this->store->store($items);
+        $this->timer->stopTimerOf($itemId);
     }
 
     private function indexOf(array $items, string $itemId): int
