@@ -16,6 +16,9 @@ docker compose run --rm app composer quality:check   # checks the code style wit
 
 A change is done when `composer quality` and `composer test` pass.
 
+How the application is built and how to work on it is written down in [AGENTS.md](AGENTS.md) and the books in
+[`docs/`](docs/): the [archbook](docs/archbook.md), the [devbook](docs/devbook.md) and the [TUI book](docs/tuibook.md).
+
 ## Using it
 
 Type an item and press Enter to add it. Press Tab to move to the list.
@@ -115,3 +118,8 @@ What the gates did not prevent: the screen refreshes through `Tui::scheduleInter
 `@internal`, and a test helper of time tracking (`tests/Unit/TimeTracking/TimeTrackingWorld.php`) builds the todo
 list's `TodoListDomainService` itself, which the architecture tests do not see, as they look at the application's
 code, not at its tests.
+
+The books in `docs/` came to `v1-guided` after this was built, and are merged into this branch. They name both as
+conventions (the [TUI book](docs/tuibook.md#refreshing): only the TUI component's public API; the
+[devbook](docs/devbook.md#tests): tests use another vertical only through its facade). The agent's code is left as it
+was built; no check enforces either convention.

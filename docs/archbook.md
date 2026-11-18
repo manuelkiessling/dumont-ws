@@ -1,0 +1,141 @@
+# Architecture Book
+
+How the application is built: its verticals and their layers, how verticals work together, and the conventions of its
+code. Most rules here are enforced by `composer quality` and `composer test`; the [devbook](devbook.md) says how to run
+them.
+
+
+## Verticals and layers
+
+The code is organized by verticals (feature modules). Each folder under `src/` is a vertical with a bounded context of
+its own, and each vertical has the layers it needs:
+
+```
+src/
+└── FeatureName/
+    ├── Domain/           # The business: its models, rules and use cases
+    ├── Facade/           # What other verticals may use (the port between verticals)
+    ├── Infrastructure/   # Adapters to systems outside the vertical, such as files
+    └── Presentation/     # What a person sees and does: terminal screens and their commands
+```
+
+- **A layer is a concern, not a kind of class.** A console command stands in the layer whose work it starts: the
+  command that opens a screen is the Presentation's. Ask which concern a class serves, not where others of its kind
+  are.
+- A vertical omits the layers it does not need. Only add a `Facade/` when another vertical actually needs one.
+- `Common/` is shared by every vertical, for what no vertical owns, such as the current time
+  (`Common\Domain\Service\DateAndTimeService`). Every vertical may use `Common`; `Common` uses no vertical.
+
+### Domain
+
+- **Models** (`Domain/Model`) hold business state and decide only from what they are given. A model never reads the
+  clock, draws randomness, or calls a service; whoever calls it passes the time and new IDs in, as
+  `TodoItem::markedDoneAt($doneAt)` takes its time. `PureDomainCodeRule` holds this.
+- **The domain service** (`Domain/Service/<Name>DomainService`) has one public method per use case. It validates,
+  takes the current time once per command, makes new IDs, and asks its ports. Every rule of the vertical is decided
+  here or in its models, never in a screen or a store.
+- **Ports** are interfaces under `Domain`, such as `TodoItemStoreInterface`, implemented by an adapter under
+  `Infrastructure`. What a domain class takes in its constructor from outside `Domain` is an interface
+  (`DomainReachesOutThroughInterfacesRule`), and the domain names no class under any `Infrastructure`
+  (`DomainNamesNoInfrastructureRule`).
+- **Refusals** are exceptions under `Domain/Exception` that extend the vertical's abstract `<Vertical>RefusedException`
+  (as `TodoRefusedException`), made by named factories (`InvalidItemTextException::tooLong(200)`). The message is
+  written for the person in front of the screen, who sees it as it is.
+
+### Infrastructure
+
+- An adapter implements a port of its vertical's domain. A store keeps the vertical's data in one JSON file of its
+  own, under `var/data/` (and `var/test/` in the test environment); the file's path is a parameter in
+  `config/services.yaml` (`app.todo_items_file`), bound by name to the store's constructor argument.
+- A store checks what it decodes: a file can hold anything, so it throws instead of passing on what is not what it
+  expects. It writes the whole file at once.
+
+
+## Verticals working together
+
+Verticals are isolated from each other's internals. A vertical uses another one only through that vertical's
+`Facade`:
+
+- **Facade interfaces** (`Facade/<Name>Interface`) with their **DTOs** (`Facade/Dto/<Name>Dto`), `final readonly`
+  classes of simple fields. A facade passes and returns DTOs, value objects, enums and primitives, never models or any
+  other class of an internal layer (`FacadesExposeNoInternalsRule`). A facade class stands behind the interface where it
+  has work of its own, such as turning models into DTOs; a class that would only forward every call implements the
+  interface itself (`FacadeClassesHaveWorkOfTheirOwnRule`).
+- **Facade events** (`Facade/SymfonyEvent/<Name>SymfonyEvent`), announced by the vertical's domain service through
+  PSR-14's `EventDispatcherInterface`, and heard by a listener (`#[AsEventListener]`) in another vertical's
+  `Infrastructure`. A vertical that must react to what happens in another one listens; the vertical where it happens
+  does not know who listens. Event classes end in `SymfonyEvent` (`SymfonyEventClassNameRule`,
+  `DispatchedSymfonyEventNameRule`).
+- `config/services.yaml` excludes the verticals' models and exceptions from the services, as they are data, not
+  services. When a vertical gets a `Facade/Dto/` or a `Facade/SymfonyEvent/`, add them to the excludes the same way
+  (`'../src/*/Facade/Dto/'`, `'../src/*/Facade/SymfonyEvent/'`).
+
+**Dependencies point one way.** No cycle between verticals: if A uses B's facade, B neither uses A's facade nor names
+any of A's classes; B announces an event that A hears instead. The direction is declared for
+`VerticalDependencyDirectionRule` in `phpstan.dist.neon` (`'TimeTracking -> Todo'` would say that `TimeTracking` may
+use `Todo`); every vertical is listed there, also one that depends on nothing (`'Todo ->'`).
+
+The architecture test `tests/Architecture/FeatureBoundariesArchTest.php` fails for any class of a vertical that names
+another vertical's `Domain`, `Infrastructure` or `Presentation`.
+
+
+## Data transfer
+
+- DTOs are `final readonly` classes with promoted constructor properties, flat rather than nested.
+- What crosses a class boundary is never an associative array. An array in a public or protected signature is a
+  `list<T>`, annotated with PHPDoc (`@param list<TodoItem> $items`, `@return list<TodoItem>`), each tag on a line of
+  its own (`NoAssociativeArraysAcrossBoundariesRule`). Anything associative becomes a DTO.
+
+
+## Time and IDs
+
+- The current time comes from `DateAndTimeService::getDateTimeImmutable()`, never from `new DateTimeImmutable()`,
+  `time()` or `date()` (`NoDirectDateTimeUsageRule`). All times are UTC. Reading a stored time back
+  (`DateTimeImmutable::createFromFormat()` in a store) is fine.
+- IDs are UUIDs made with `Uuid::v7()` (`symfony/uid`) by a domain service and passed into the model.
+
+
+## The Todo vertical
+
+The worked example to copy:
+
+- **Model** `TodoItem`: an ID, one line of text, when it was added, and when it was done, if it was.
+- **Domain service** `TodoListDomainService`: `items()`, `addItem()`, `markItemDone()`, `deleteItem()`. An item is one
+  line of text of at most 200 characters, trimmed. Marking a done item done again changes nothing and succeeds. An item
+  that is not on the list can be neither marked done nor deleted.
+- **Port** `TodoItemStoreInterface`, implemented by `JsonFileTodoItemStore` (`var/data/todo_items.json`).
+- **Refusals** `InvalidItemTextException` and `ItemNotOnTheListException`, under `TodoRefusedException`.
+- **Screen** `TodoListScreen` and its command `TodoCommand` (`app:todo`), see the [TUI book](tuibook.md).
+- **Tests** on every level: `tests/Unit/Todo` (the domain service with an in-memory store, the screen on a virtual
+  terminal) and `tests/Integration/Todo` (the JSON store as the container wires it).
+
+
+## Adding a new vertical
+
+1. Name its use cases: what it does, and what it refuses.
+2. Create `src/<Vertical>/` with the layers it needs: models, a domain service, ports and refusals under `Domain`;
+   adapters under `Infrastructure`; a screen and its command under `Presentation`.
+3. If it keeps data: a store port, a JSON store, and the file's parameter in `config/services.yaml`, with its
+   `when@test` path under `var/test/`.
+4. If it needs another vertical: use that vertical's facade, and add the facade first where there is none. If another
+   vertical must learn of what happens in it, or it of what happens in another: a facade event and a listener.
+5. Declare its dependencies in `phpstan.dist.neon`.
+6. Tests on every level, as for the Todo vertical.
+7. Say in the README how a person uses it.
+
+
+## Coding conventions
+
+Enforced by PHPStan (level 10, 100 % type coverage, the ergebnis rules and the project's rules in
+`tools/PhpStan/Rules`) and PHP CS Fixer:
+
+- Every file starts with `declare(strict_types=1);`. Target PHP 8.5 and use its features.
+- No named arguments in calls (in attributes they are fine). Where a library's constructor has many optional
+  parameters, use its fluent methods instead, as `new Style()->withBold()->withColor('cyan')`.
+- No `isset()`, `switch` (use `match`), `compact()`, `eval`, `@` or references (`&`).
+- Native types everywhere; narrow `mixed` from outside with `is_string()` and the like.
+- A kind, a type, a status or a state is an enum case, never a string (`ClosedSetsAreEnumsRule`).
+- Classes are `final` (and `readonly` where they can be); dependencies come in through the constructor and are
+  autowired.
+- Use `mb_*` functions for strings.
+- No code ends the process (`exit`, `die`); the architecture tests hold it.
