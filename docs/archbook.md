@@ -24,7 +24,8 @@ src/
   are.
 - A vertical omits the layers it does not need. Only add a `Facade/` when another vertical actually needs one.
 - `Common/` is shared by every vertical, for what no vertical owns, such as the current time
-  (`Common\Domain\Service\DateAndTimeService`). Every vertical may use `Common`; `Common` uses no vertical.
+  (`Common\Domain\Service\DateAndTimeService`). Every vertical may use `Common`; `Common` uses no vertical, not even
+  a facade (`FeatureBoundariesArchTest`).
 
 ### Domain
 
@@ -40,13 +41,16 @@ src/
   (`DomainNamesNoInfrastructureRule`).
 - **Refusals** are exceptions under `Domain/Exception` that extend the vertical's abstract `<Vertical>RefusedException`
   (as `TodoRefusedException`), made by named factories (`InvalidItemTextException::tooLong(200)`). The message is
-  written for the person in front of the screen, who sees it as it is.
+  written for the person in front of the screen, who sees it as it is. `ConventionsTest` holds that every class under
+  `Domain/Exception` extends its vertical's abstract refusal.
 
 ### Infrastructure
 
 - An adapter implements a port of its vertical's domain. A store keeps the vertical's data in one JSON file of its
   own, under `var/data/` (and `var/test/` in the test environment); the file's path is a parameter in
   `config/services.yaml` (`app.todo_items_file`), bound by name to the store's constructor argument.
+  `tests/Integration/Common/ConfigurationTest.php` holds that every `app.*_file` lies under `var/data/`, and under
+  `var/test/` in the tests, so that a test never touches the application's data.
 - A store checks what it decodes: a file can hold anything, so it throws instead of passing on what is not what it
   expects. It writes the whole file at once.
 
@@ -57,7 +61,7 @@ Verticals are isolated from each other's internals. A vertical uses another one 
 `Facade`:
 
 - **Facade interfaces** (`Facade/<Name>Interface`) with their **DTOs** (`Facade/Dto/<Name>Dto`), `final readonly`
-  classes of simple fields. A facade passes and returns DTOs, value objects, enums and primitives, never models or any
+  classes of simple fields (`ConventionsTest`). A facade passes and returns DTOs, value objects, enums and primitives, never models or any
   other class of an internal layer (`FacadesExposeNoInternalsRule`). A facade class stands behind the interface where it
   has work of its own, such as turning models into DTOs; a class that would only forward every call implements the
   interface itself (`FacadeClassesHaveWorkOfTheirOwnRule`).
@@ -68,12 +72,14 @@ Verticals are isolated from each other's internals. A vertical uses another one 
   `DispatchedSymfonyEventNameRule`).
 - `config/services.yaml` excludes the verticals' models and exceptions from the services, as they are data, not
   services. When a vertical gets a `Facade/Dto/` or a `Facade/SymfonyEvent/`, add them to the excludes the same way
-  (`'../src/*/Facade/Dto/'`, `'../src/*/Facade/SymfonyEvent/'`).
+  (`'../src/*/Facade/Dto/'`, `'../src/*/Facade/SymfonyEvent/'`). `ConfigurationTest` holds that no model, refusal,
+  DTO or event is a service.
 
 **Dependencies point one way.** No cycle between verticals: if A uses B's facade, B neither uses A's facade nor names
 any of A's classes; B announces an event that A hears instead. The direction is declared for
 `VerticalDependencyDirectionRule` in `phpstan.dist.neon` (`'TimeTracking -> Todo'` would say that `TimeTracking` may
-use `Todo`); every vertical is listed there, also one that depends on nothing (`'Todo ->'`).
+use `Todo`); every vertical is listed there, also one that depends on nothing (`'Todo ->'`). `ConventionsTest` holds
+that every vertical is listed and that the declared dependencies form no cycle.
 
 The architecture test `tests/Architecture/FeatureBoundariesArchTest.php` fails for any class of a vertical that names
 another vertical's `Domain`, `Infrastructure` or `Presentation`.
@@ -83,8 +89,10 @@ another vertical's `Domain`, `Infrastructure` or `Presentation`.
 
 - DTOs are `final readonly` classes with promoted constructor properties, flat rather than nested.
 - What crosses a class boundary is never an associative array. An array in a public or protected signature is a
-  `list<T>`, annotated with PHPDoc (`@param list<TodoItem> $items`, `@return list<TodoItem>`), each tag on a line of
-  its own (`NoAssociativeArraysAcrossBoundariesRule`). Anything associative becomes a DTO.
+  `list<T>`, annotated with PHPDoc (`@param list<TodoItem> $items`, `@return list<TodoItem>`)
+  (`NoAssociativeArraysAcrossBoundariesRule`). Anything associative becomes a DTO.
+- Every PHPDoc tag starts a line of its own: after text, or after another tag on its line, PHPDoc reads it as text,
+  and the type it gives is lost (`PhpDocTagsStartALineRule`).
 
 
 ## Time and IDs
@@ -92,7 +100,8 @@ another vertical's `Domain`, `Infrastructure` or `Presentation`.
 - The current time comes from `DateAndTimeService::getDateTimeImmutable()`, never from `new DateTimeImmutable()`,
   `time()` or `date()` (`NoDirectDateTimeUsageRule`). All times are UTC. Reading a stored time back
   (`DateTimeImmutable::createFromFormat()` in a store) is fine.
-- IDs are UUIDs made with `Uuid::v7()` (`symfony/uid`) by a domain service and passed into the model.
+- IDs are UUIDs made with `Uuid::v7()` (`symfony/uid`) by a domain service and passed into the model. No other
+  layer makes IDs or draws randomness (`RandomnessOnlyInDomainServicesRule`).
 
 
 ## The Todo vertical
@@ -120,8 +129,12 @@ The worked example to copy:
 4. If it needs another vertical: use that vertical's facade, and add the facade first where there is none. If another
    vertical must learn of what happens in it, or it of what happens in another: a facade event and a listener.
 5. Declare its dependencies in `phpstan.dist.neon`.
-6. Tests on every level, as for the Todo vertical.
-7. Say in the README how a person uses it.
+6. Tests on every level, as for the Todo vertical: `tests/Unit/<Vertical>` with a test of every domain service and
+   every screen, and `tests/Integration/<Vertical>`.
+7. A section `## The <Vertical> vertical` in this book, as for the Todo vertical, and in the README how a person uses
+   it, naming its commands.
+
+`ConventionsTest` holds steps 5 to 7.
 
 
 ## Coding conventions
@@ -139,3 +152,6 @@ Enforced by PHPStan (level 10, 100 % type coverage, the ergebnis rules and the p
   autowired.
 - Use `mb_*` functions for strings.
 - No code ends the process (`exit`, `die`); the architecture tests hold it.
+- Use only a library's public API: nothing that it marks `@internal` (`NoInternalApiOfLibrariesRule`).
+- Every package the code uses is declared in `composer.json`, also one that another package brings along anyway
+  (`composer-dependency-analyser`, run by `composer quality`).

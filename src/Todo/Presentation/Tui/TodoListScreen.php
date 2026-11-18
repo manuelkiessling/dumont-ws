@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Todo\Presentation\Tui;
 
+use App\Common\Presentation\Tui\TerminalText;
 use App\Todo\Domain\Exception\TodoRefusedException;
 use App\Todo\Domain\Model\TodoItem;
 use App\Todo\Domain\Service\TodoListDomainService;
@@ -24,7 +25,6 @@ use Symfony\Component\Tui\Widget\ContainerWidget;
 use Symfony\Component\Tui\Widget\InputWidget;
 use Symfony\Component\Tui\Widget\SelectListWidget;
 use Symfony\Component\Tui\Widget\TextWidget;
-use Symfony\Component\Tui\Widget\Util\StringUtils;
 
 /**
  * The todo list's screen: a line to add an item, a notice for what was refused, and the list of items.
@@ -202,7 +202,7 @@ final class TodoListScreen
      */
     private function listItem(TodoItem $item): array
     {
-        $text = StringUtils::stripControlBytes($item->text);
+        $text = TerminalText::withoutControls($item->text);
 
         return [
             'value' => $item->id,

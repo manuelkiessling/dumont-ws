@@ -12,8 +12,8 @@ after cloning builds the image and installs the dependencies.
 docker compose run --rm app                          # opens the todo list (bin/console app:todo)
 docker compose run --rm app bin/console <command>    # any console command
 docker compose run --rm app composer test            # all tests: architecture, unit and integration
-docker compose run --rm app composer quality         # fixes the code style, then checks it and runs PHPStan
-docker compose run --rm app composer quality:check   # checks the code style without fixing it, and runs PHPStan
+docker compose run --rm app composer quality         # fixes the code style, checks it, runs PHPStan, checks dependencies
+docker compose run --rm app composer quality:check   # the same, without fixing the code style
 docker compose run --rm app vendor/bin/pest tests/Unit/Todo/TodoListScreenTest.php   # one test file
 ```
 
@@ -28,9 +28,12 @@ terminal, where it would draw over a screen. Delete `var/data/` to start over.
 3. New behavior is covered by tests on the right level (see [Tests](#tests)).
 4. The application works when run, not only its tests: open the screens you changed and use them.
 5. The README says how a person uses what changed, and a book says what changed in how the application is built.
+   The architecture tests hold the least of it: every vertical has its section in the archbook, every command is named
+   in the README.
 
 **Never make a check pass by weakening it**: no `@phpstan-ignore`, no baseline, no new `ignoreErrors` or excludes in
-`phpstan.dist.neon`, `.php-cs-fixer.dist.php` or the architecture tests, and no skipped, deleted or loosened tests. The
+`phpstan.dist.neon`, `.php-cs-fixer.dist.php`, `composer-dependency-analyser.php` or the architecture tests, and no
+skipped, deleted or loosened tests. `tests/Architecture/ChecksStayStrictTest.php` holds most of it. The
 one change to the checks' configuration that belongs to ordinary work is declaring a vertical's dependencies in
 `phpstan.dist.neon` (see the [archbook](archbook.md#verticals-working-together)). If a rule seems to be in the way,
 stop and ask.
@@ -54,8 +57,11 @@ Tests run with Pest, which runs the PHPUnit test classes too. Test classes end i
 - **Ports in unit tests:** an in-memory implementation in the test folder, as `tests/Unit/Todo/InMemoryTodoItemStore`.
 - **Integration tests** extend `KernelTestCase`, take services from `self::getContainer()`, and delete their vertical's
   file under `var/test/` in `setUp()`.
-- **Tests use only what a vertical offers others:** a test of one vertical that needs another one uses that vertical's
-  facade, or a stand-in for its facade interface, never its internals.
+- **Unit tests use only what a vertical offers others:** a unit test of one vertical that needs another one uses that
+  vertical's facade, or a stand-in for its facade interface, never its internals (`FeatureBoundariesArchTest`).
+  Integration tests may wire the real services of several verticals together, as testing that wiring is their task.
+- **Every vertical is tested on every level:** `tests/Unit/<Vertical>`, with a test of every domain service and every
+  screen named after it (`<Class>Test`), and `tests/Integration/<Vertical>` (`ConventionsTest`).
 
 ### Time in tests
 

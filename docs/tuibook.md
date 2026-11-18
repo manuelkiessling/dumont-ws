@@ -14,7 +14,8 @@ with the [Symfony TUI component](https://symfony.com/doc/current/tui.html) (`sym
   - `public function mount(Tui $tui): void`, which adds the widgets, wires their events to private methods, and
     shows the first state.
 - **The command**, `src/<Vertical>/Presentation/Command/<Name>Command.php`, is an invokable `#[AsCommand(name:
-  'app:<name>')]` class that makes the Tui, mounts the screen and runs it until the person quits:
+  'app:<name>')]` class that makes the Tui, mounts the screen and runs it until the person quits (`ConventionsTest`
+  holds the names, `createTui()` and `mount()`):
 
 ```php
 $tui = TodoListScreen::createTui();
@@ -33,7 +34,9 @@ stores. A screen that must show what another process changed reads it again (see
 - **A refusal** is caught as the vertical's `<Vertical>RefusedException` and its message is shown on the notice line
   (a `TextWidget` with the classes `notice` and `hidden`; the `hidden` class is removed while there is a message).
   What the person typed stays where it was.
-- **Text from the data** (an item's text) passes `StringUtils::stripControlBytes()` before it becomes a label.
+- **Text from the data** (an item's text) passes `Common\Presentation\Tui\TerminalText::withoutControls()` before it
+  becomes a label, so that a control character in it cannot drive the terminal. (The TUI component's own
+  `StringUtils` is `@internal` to it.)
 - **A list** is a `SelectListWidget` whose items are `['value' => <id>, 'label' => <text>]`. After the list is set
   anew, the screen selects the item that was selected before.
 - **Focus:** a widget taken out of the tree loses its focus. A part that alternates between a list and an empty
@@ -78,8 +81,9 @@ try {
 }
 ```
 
-A vertical that uses Revolt directly declares `revolt/event-loop` in `composer.json`. Use only the TUI component's
-public API: what it marks `@internal` (such as `Tui::scheduleInterval()`) may change without notice.
+A vertical that uses Revolt directly declares `revolt/event-loop` in `composer.json` (`composer quality` reports it
+otherwise). Use only the TUI component's public API: what it marks `@internal` (such as `Tui::scheduleInterval()`)
+may change without notice (`NoInternalApiOfLibrariesRule`).
 
 
 ## Testing a screen

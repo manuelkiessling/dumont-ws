@@ -43,6 +43,9 @@ rules:
     - App\Tools\PhpStan\Rules\DispatchedSymfonyEventNameRule
     - App\Tools\PhpStan\Rules\ClosedSetsAreEnumsRule
     - App\Tools\PhpStan\Rules\DomainNamesNoInfrastructureRule
+    - App\Tools\PhpStan\Rules\NoInternalApiOfLibrariesRule
+    - App\Tools\PhpStan\Rules\PhpDocTagsStartALineRule
+    - App\Tools\PhpStan\Rules\RandomnessOnlyInDomainServicesRule
 
 services:
     -

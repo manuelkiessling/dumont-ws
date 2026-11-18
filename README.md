@@ -7,10 +7,10 @@ A todo list in the terminal.
 You need Docker.
 
 ```bash
-docker compose run --rm app                          # opens the todo list
+docker compose run --rm app                          # opens the todo list (bin/console app:todo)
 docker compose run --rm app composer test            # runs all tests: architecture, unit and integration
-docker compose run --rm app composer quality         # fixes the code style, then checks it and runs PHPStan
-docker compose run --rm app composer quality:check   # checks the code style without fixing it, and runs PHPStan
+docker compose run --rm app composer quality         # fixes the code style, checks it, runs PHPStan, checks dependencies
+docker compose run --rm app composer quality:check   # the same, without fixing the code style
 ```
 
 A change is done when `composer quality` and `composer test` pass.
